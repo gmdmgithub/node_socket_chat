@@ -1,12 +1,88 @@
 //server file to create server
-const app = require('./app');
+const app = require('./app').app;
+const db = require('./app').db;
 
 
 
 //take the port from env properties
-app.set('port', process.env.PORT || 8080);
+app.set('port', process.env.PORT || 3000);
+
+
+//create server with express
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
+// io.on('connection', socket => {
+//     socket.emit('request', /* … */); // emit an event to the socket
+//     io.emit('broadcast', /* … */); // emit an event to all connected sockets
+//     socket.on('reply', () => { /* … */ }); // listen to the event
+//   });
+
+
+
+//connect and perform
+io.on('connection', () => {
+
+    const chat = db.collection('chats');
+
+    // Create function to send status
+    sendStatus = status => {
+        socket.emit('status', status);
+    }
+
+    // Get chats from mongo collection
+    chat.find().limit(100).sort({
+        _id: 1
+    }).toArray((err, res) => {
+        if (err) {
+            throw err;
+        }
+
+        // Emit the messages
+        socket.emit('output', res);
+    });
+
+    // Handle input events
+    socket.on('input', data => {
+        let name = data.name;
+        let message = data.message;
+
+        // Check for name and message
+        if (name == '' || message == '') {
+            // Send error status
+            sendStatus('Please enter a name and message');
+        } else {
+            // Insert message
+            chat.insert({
+                name: name,
+                message: message
+            }, () => {
+                client.emit('output', [data]);
+
+                // Send status object
+                sendStatus({
+                    message: 'Message sent',
+                    clear: true
+                });
+            });
+        }
+    });
+
+    // Handle clear
+    socket.on('clear', (data) => {
+        // Remove all chats from collection
+        chat.remove({}, function () {
+            // Emit cleared
+            socket.emit('cleared');
+        });
+    });
+
+
+});
+
+
 
 //now we listen on the port and start it!
-const server = app.listen(app.get('port'), () => {
+server.listen(app.get('port'), () => {
     console.log(`App listening on port ${server.address().port}`);
 });

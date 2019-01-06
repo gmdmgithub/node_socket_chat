@@ -17,8 +17,9 @@ dotenv.config({
 });
 
 
+
 // Use connect method to connect to the server
-MongoClient.connect(process.env.DB_URL, (err, client) => {
+const db = MongoClient.connect(process.env.DB_URL, (err, client) => {
     assert.equal(null, err);
     console.log("Connected successfully to db server");
     const db = client.db(process.env.DB_NAME);
@@ -30,9 +31,8 @@ MongoClient.connect(process.env.DB_URL, (err, client) => {
 
     });
 
-    client.close();
+    return db
 });
-
 
 
 //create app with exprress the most important!!
@@ -47,5 +47,11 @@ app.use(errorHendler.notFound);
 //catch any error in the system
 app.use(errorHendler.catchErrors);
 
+
+
+
 //exprot the app for other files
-module.exports = app;
+module.exports = {
+    app,
+    db
+}

@@ -10,4 +10,30 @@ https://github.com/mongodb/node-mongodb-native
 $ npm i mongodb express socket.io dotenv
 ```
 
-# read variable from .env file
+## read variable from .env file
+
+```node
+const dotenv = require("dotenv");
+dotenv.config({
+  path: ".env"
+});
+```
+
+## Working with socket - example
+
+```node
+socket.on("action", data => {
+  let something = data.something;
+  if (something == "strange") socket.emit("do_something");
+  //emit to consumer
+  else {
+    const collection = db.collection("documents");
+    // Find some documents
+    collection.find({}).toArray(function(err, docs) {
+      assert.equal(err, null);
+      console.log("Found the following records");
+      socket.emit("do_something_else", docs);
+    });
+  }
+});
+```
