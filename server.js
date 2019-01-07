@@ -69,15 +69,17 @@ MongoClient.connect(process.env.DB_URL, (err, client) => {
                 sendStatus('Please enter a name and message');
             } else {
                 // Insert message
-                chat.insert({
+                chat.insertOne({
                     name: name,
                     message: message
                 }, () => {
-                    client.emit('output', [data]);
+
+                    //console.log('output', data);
+                    socket.emit('output', [data]);
 
                     // Send status object
                     sendStatus({
-                        message: 'Message sent',
+                        message: 'Message sent and update',
                         clear: true
                     });
                 });
