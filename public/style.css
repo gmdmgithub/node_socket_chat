@@ -1,0 +1,7 @@
+.card-block {
+    overflow: auto;
+}
+
+#messages {
+    height: 300px;
+}

@@ -1,5 +1,7 @@
 //server file to create server
 const app = require('./app').app;
+const socket = require('socket.io');
+const http = require('http');
 
 const MongoClient = require('mongodb').MongoClient;
 //assert, path - its native module - do not exists npm i assert
@@ -12,8 +14,8 @@ app.set('port', process.env.PORT || 4000);
 
 
 //create server with express
-const server = require('http').createServer(app);
-const io = require('socket.io')(server);
+const server = http.createServer(app);
+const io = socket(server);
 
 // io.on('connection', (socket) => {
 //     socket.emit('request', /* … */); // emit an event to the socket
@@ -36,10 +38,11 @@ MongoClient.connect(process.env.DB_URL, (err, client) => {
 
     });
 
-    //connect and perform
+    //connect from the client and perform the acktion
     io.on('connection', (socket) => {
 
         const chat = db.collection('chats');
+        console.log(socket.id);
 
         // Create function to send status
         sendStatus = status => {
@@ -62,6 +65,8 @@ MongoClient.connect(process.env.DB_URL, (err, client) => {
         socket.on('input', data => {
             let name = data.name;
             let message = data.message;
+            console.log(socket.id);
+
 
             // Check for name and message - if message and name is blank
             if (name == '' || message == '') {
@@ -71,11 +76,13 @@ MongoClient.connect(process.env.DB_URL, (err, client) => {
                 // Insert message
                 chat.insertOne({
                     name: name,
-                    message: message
+                    message: message,
+                    chatId: socket.id
                 }, () => {
 
                     //console.log('output', data);
                     socket.emit('output', [data]);
+                    socket.broadcast.emit('output', [data]);
 
                     // Send status object
                     sendStatus({
